@@ -33,6 +33,15 @@ impl Bucket {
         since_last / self.refill_time * self.refill_amount
     }
 
+    /// Get available tokens
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use rate_limiter::bucket;
+    /// let bucket = bucket::Bucket::new(5, 2, 1);
+    /// assert_eq!(bucket.get_available_tokens(), 5);
+    /// ```
     pub fn get_available_tokens(&self) -> i32 {
         min(
             self.max_amount,
