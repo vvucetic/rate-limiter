@@ -9,6 +9,8 @@ pub struct RateLimiter {
 }
 
 impl RateLimiter {
+    /// Initialize RateLimiter with default parameters used when bucket for particular key is not
+    /// present.
     pub fn new(
             default_max_amount: i32,
             default_refill_time: i32,
@@ -21,7 +23,22 @@ impl RateLimiter {
         }
     }
 
-    pub fn reduce(&mut self, key: String, reduce_tokens: i32) -> bool {
+    /// Tries reducing tokens in bucket for particular key. Returns (success, available_tokens)
+    /// tuple. Success is `false` if there is not enough tokens, otherwise `true`. If
+    /// success was `false`, tokens weren't removed.
+    /// If key is not present in rate limiter, bucket is added with default parameters.
+    /// 
+    /// # Examples
+    /// ```
+    /// use rate_limiter;
+    /// let mut rate_limiter = rate_limiter::RateLimiter::new(5, 2, 1);
+    /// assert!(rate_limiter.reduce(String::from("some key"), 5).0);
+    /// assert!(!rate_limiter.reduce(String::from("some key"), 1).0);
+    /// 
+    /// assert!(rate_limiter.reduce(String::from("some other key"), 5).0);
+    /// assert!(!rate_limiter.reduce(String::from("some other key"), 1).0);
+    /// ```
+    pub fn reduce(&mut self, key: String, reduce_tokens: i32) -> (bool, i32) {
         if self.buckets.contains_key(&key) {
             return self.buckets.get_mut(&key).unwrap().reduce(reduce_tokens);
         }
