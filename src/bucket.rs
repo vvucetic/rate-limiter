@@ -1,6 +1,6 @@
-use std::time::Instant;
-use std::convert::TryInto;
 use std::cmp::min;
+use std::convert::TryInto;
+use std::time::Instant;
 
 pub struct Bucket {
     max_amount: i32,
@@ -34,9 +34,9 @@ impl Bucket {
     }
 
     /// Get available tokens
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// use rate_limiter::bucket;
     /// let bucket = bucket::Bucket::new(5, 2, 1);
@@ -45,16 +45,16 @@ impl Bucket {
     pub fn get_available_tokens(&self) -> i32 {
         min(
             self.max_amount,
-            self.available_tokens + self.get_refill_tokens()
+            self.available_tokens + self.get_refill_tokens(),
         )
     }
 
     /// Tries reducing tokens in bucket for particular key. Returns (success, available_tokens)
     /// tuple. Success is `false` if there is not enough tokens, otherwise `true`. If
     /// success was `false`, tokens weren't removed.
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// use rate_limiter::bucket;
     /// let mut bucket = bucket::Bucket::new(5, 1, 1);
@@ -62,7 +62,7 @@ impl Bucket {
     /// let (success, available_tokens) = bucket.reduce(6);
     /// assert!(!success);
     /// assert_eq!(available_tokens, 5);
-    /// 
+    ///
     /// // reducing fewer tokens than available, returns true
     /// let (success, available_tokens) = bucket.reduce(1);
     /// assert!(success);

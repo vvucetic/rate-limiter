@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use crate::bucket;
+use std::collections::HashMap;
 
 pub struct RateLimiter {
     default_max_amount: i32,
@@ -12,9 +12,10 @@ impl RateLimiter {
     /// Initialize RateLimiter with default parameters used when bucket for particular key is not
     /// present.
     pub fn new(
-            default_max_amount: i32,
-            default_refill_time: i32,
-            default_refill_amount: i32) -> RateLimiter {
+        default_max_amount: i32,
+        default_refill_time: i32,
+        default_refill_amount: i32,
+    ) -> RateLimiter {
         RateLimiter {
             default_max_amount,
             default_refill_time,
@@ -27,14 +28,14 @@ impl RateLimiter {
     /// tuple. Success is `false` if there is not enough tokens, otherwise `true`. If
     /// success was `false`, tokens weren't removed.
     /// If key is not present in rate limiter, bucket is added with default parameters.
-    /// 
+    ///
     /// # Examples
     /// ```
     /// use rate_limiter;
     /// let mut rate_limiter = rate_limiter::RateLimiter::new(5, 2, 1);
     /// assert!(rate_limiter.reduce(String::from("some key"), 5).0);
     /// assert!(!rate_limiter.reduce(String::from("some key"), 1).0);
-    /// 
+    ///
     /// assert!(rate_limiter.reduce(String::from("some other key"), 5).0);
     /// assert!(!rate_limiter.reduce(String::from("some other key"), 1).0);
     /// ```
@@ -45,11 +46,10 @@ impl RateLimiter {
         let mut bucket = bucket::Bucket::new(
             self.default_max_amount,
             self.default_refill_time,
-            self.default_refill_amount);
+            self.default_refill_amount,
+        );
         let result = bucket.reduce(reduce_tokens);
-        self.buckets.insert(
-            key,
-            bucket);
+        self.buckets.insert(key, bucket);
         result
     }
 }
