@@ -2,6 +2,7 @@ use std::cmp::min;
 use std::convert::TryInto;
 use std::time::Instant;
 
+#[derive(Debug)]
 pub struct Bucket {
     max_amount: i32,
     refill_time: i32,
