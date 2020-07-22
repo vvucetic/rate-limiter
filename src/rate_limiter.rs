@@ -86,7 +86,6 @@ impl AtomicRateLimiter {
     /// tuple. Success is `false` if there is not enough tokens, otherwise `true`. If
     /// success was `false`, tokens weren't removed.
     /// If key is not present in rate limiter, bucket is added with default parameters.
-
     pub fn reduce(&self, key: String, reduce_tokens: i32) -> (bool, i32) {
         // assume bucket exists so lock HashMap for reading
         let buckets = self.buckets.read().expect("RWLock poisoned.");
@@ -96,15 +95,21 @@ impl AtomicRateLimiter {
         }
         // drop read lock
         drop(buckets);
+        // make write lock
+        let mut buckets = self.buckets.write().expect("RWLock poisoned.");
+        // try reducing again this time with write lock
+        if let Some(bucket) = buckets.get(&key) {
+            let mut bucket = bucket.lock().expect("Mutex poisoned");
+            return bucket.reduce(reduce_tokens);
+        }
+        // if still no key, insert one
         let mut bucket = bucket::Bucket::new(
                 self.default_max_amount,
                 self.default_refill_time,
                 self.default_refill_amount,
             );
         let result = bucket.reduce(reduce_tokens);
-        let mut buckets = self.buckets.write().expect("RWLock poisoned.");
-        // "upsert" in case other thread got here before
-        buckets.entry(key).or_insert_with(|| Mutex::new(bucket));
+        buckets.insert(key, Mutex::new(bucket));
         result
     }
 }
@@ -119,7 +124,7 @@ mod tests {
 
     #[test]
     fn test_reducing_tokens_atomic() {
-        let data = Arc::new(AtomicRateLimiter::new(5,1,1));
+        let data = Arc::new(AtomicRateLimiter::new(30,1,1));
 
         let threads: Vec<_> = (0..10)
             .map(|_| {
