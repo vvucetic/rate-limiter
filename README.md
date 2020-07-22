@@ -1,4 +1,5 @@
 # rate_limiter
+![Continuous integration](https://github.com/vvucetic/rate-limiter/workflows/Continuous%20integration/badge.svg?branch=master)
 
 `rate_limiter` is in-memory rate limiter for generic purposes. It implements leaky bucket/token bucket algorithm with the following characteristics:
 - each bucket has maximum number of tokens at the beginning (max capacity, `max_amount`) and can not hold more than that
