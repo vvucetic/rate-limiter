@@ -67,7 +67,7 @@ pub struct AtomicRateLimiter {
 }
 
 impl AtomicRateLimiter {
-    /// Initialize AtomicRateLimiter with default parameters used when bucket for particular key is 
+    /// Initialize AtomicRateLimiter with default parameters used when bucket for particular key is
     /// not present.
     pub fn new(
         default_max_amount: i32,
@@ -104,10 +104,10 @@ impl AtomicRateLimiter {
         }
         // if still no key, insert one
         let mut bucket = bucket::Bucket::new(
-                self.default_max_amount,
-                self.default_refill_time,
-                self.default_refill_amount,
-            );
+            self.default_max_amount,
+            self.default_refill_time,
+            self.default_refill_amount,
+        );
         let result = bucket.reduce(reduce_tokens);
         buckets.insert(key, Mutex::new(bucket));
         result
@@ -117,14 +117,11 @@ impl AtomicRateLimiter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::{
-        sync::Arc,
-        thread,
-    };
+    use std::{sync::Arc, thread};
 
     #[test]
     fn test_reducing_tokens_atomic() {
-        let data = Arc::new(AtomicRateLimiter::new(30,1,1));
+        let data = Arc::new(AtomicRateLimiter::new(30, 1, 1));
 
         let threads: Vec<_> = (0..10)
             .map(|_| {
@@ -132,7 +129,7 @@ mod tests {
                 thread::spawn(move || data.reduce(String::from("test"), 1))
             })
             .collect();
-    
+
         for t in threads {
             t.join().expect("Thread panicked");
         }
