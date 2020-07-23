@@ -13,7 +13,7 @@ Developer can use this library to rate-limit different operations, for example r
 
 For example, to rate-limit sending some messages for some user we can implement rate limiter as in this example:
 
-```
+```rust
 use rate_limiter;
 let mut rate_limiter = rate_limiter::RateLimiter::new(5, 1, 1);
 let (success, available_tokens) = rate_limiter.reduce(String::from("send-message-user-id-1"), 1);
@@ -31,7 +31,7 @@ In practice this means that user can send 5 messages at once and then 1 every 1 
 
 Thread-safe rate_limiter (`AtomicRateLimiter`) can be used across multiple threads like in the example below:
 
-```
+```rust
 let atomic_rate_limiter = Arc::new(AtomicRateLimiter::new(30, 1, 1));
 
 let threads: Vec<_> = (0..10)
