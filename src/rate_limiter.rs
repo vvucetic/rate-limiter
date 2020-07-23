@@ -28,6 +28,23 @@ impl RateLimiter {
         }
     }
 
+    /// Returns `available_tokens` in bucket for given key. If bucket is not found, it returns
+    /// `default_max_amount`.
+    ///
+    /// # Examples
+    /// ```
+    /// use rate_limiter;
+    /// let mut rate_limiter = rate_limiter::RateLimiter::new(5, 1, 1);
+    /// rate_limiter.reduce(String::from("some key"), 1);
+    /// assert_eq!(rate_limiter.get_available_tokens(String::from("some key")), 4);
+    /// ```
+    pub fn get_available_tokens(&self, key: String) -> i32 {
+        match self.buckets.get(&key) {
+            Some(bucket) => bucket.get_available_tokens(),
+            None => self.default_max_amount,
+        }
+    }
+
     /// Tries reducing tokens in bucket for particular key. Returns (success, available_tokens)
     /// tuple. Success is `false` if there is not enough tokens, otherwise `true`. If
     /// success was `false`, tokens weren't removed.
@@ -82,6 +99,27 @@ impl AtomicRateLimiter {
         }
     }
 
+    /// Returns `available_tokens` in bucket for given key. If bucket is not found, it returns
+    /// `default_max_amount`.
+    ///
+    /// # Examples
+    /// ```
+    /// use rate_limiter;
+    /// let mut rate_limiter = rate_limiter::RateLimiter::new(5, 1, 1);
+    /// rate_limiter.reduce(String::from("some key"), 1);
+    /// assert_eq!(rate_limiter.get_available_tokens(String::from("some key")), 4);
+    /// ```
+    pub fn get_available_tokens(&self, key: String) -> i32 {
+        let buckets = self.buckets.read().expect("RWLock poisoned.");
+        match buckets.get(&key) {
+            Some(bucket) => bucket
+                .lock()
+                .expect("Mutex poisoned")
+                .get_available_tokens(),
+            None => self.default_max_amount,
+        }
+    }
+
     /// Tries reducing tokens in bucket for particular key. Returns (success, available_tokens)
     /// tuple. Success is `false` if there is not enough tokens, otherwise `true`. If
     /// success was `false`, tokens weren't removed.
@@ -133,5 +171,7 @@ mod tests {
         for t in threads {
             t.join().expect("Thread panicked");
         }
+
+        assert_eq!(data.get_available_tokens(String::from("test")), 20);
     }
 }
