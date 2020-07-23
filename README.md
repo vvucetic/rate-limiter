@@ -22,6 +22,29 @@ if success {
 }
 ```
 
-We created rate-limiter which will hold unlimited number of buckets per given key. Each bucket will have max capacity of 5 tokens and refill of 1 token every 1 second. Sending one message requires 1 token.
+We created rate-limiter which will hold unlimited number of buckets, each uniquely identified by `key`. Every bucket will have max capacity of 5 tokens and refill of 1 token every 1 second. Sending one message requires 1 token.
 In practice this means that user can send 5 messages at once and then 1 every 1 second because that's the refill speed. By changing those 3 parameters, developer can tweak bursting and refilling for desired output. If `success` was true, message sending can be allowed, otherwise, rate-limiting should be applied.
 
+
+
+### Thread-safe rate_limiter
+
+Thread-safe rate_limiter (`AtomicRateLimiter`) can be used across multiple threads like in the example below:
+
+```
+let atomic_rate_limiter = Arc::new(AtomicRateLimiter::new(30, 1, 1));
+
+let threads: Vec<_> = (0..10)
+    .map(|_| {
+        let atomic_rate_limiter = Arc::clone(&atomic_rate_limiter);
+        thread::spawn(move || atomic_rate_limiter.reduce(String::from("test"), 1))
+    })
+    .collect();
+
+for t in threads {
+    t.join().expect("Thread panicked");
+}
+
+assert_eq!(atomic_rate_limiter.get_available_tokens(String::from("test")), 20);
+```
+Internally, `AtomicRateLimiter` tries to keep buckets locked for reading (opposed to locked completely) so multiple threads can use different buckets. However, when reducing from one bucket (per key), only one thread can reduce tokens at the same time to maintain consistent state. 
