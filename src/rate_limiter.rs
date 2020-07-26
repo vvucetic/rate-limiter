@@ -105,7 +105,7 @@ impl AtomicRateLimiter {
     /// # Examples
     /// ```
     /// use rate_limiter;
-    /// let mut rate_limiter = rate_limiter::RateLimiter::new(5, 1, 1);
+    /// let mut rate_limiter = rate_limiter::AtomicRateLimiter::new(5, 1, 1);
     /// rate_limiter.reduce(String::from("some key"), 1);
     /// assert_eq!(rate_limiter.get_available_tokens(String::from("some key")), 4);
     /// ```
@@ -124,6 +124,16 @@ impl AtomicRateLimiter {
     /// tuple. Success is `false` if there is not enough tokens, otherwise `true`. If
     /// success was `false`, tokens weren't removed.
     /// If key is not present in rate limiter, bucket is added with default parameters.
+    /// # Examples
+    /// ```
+    /// use rate_limiter;
+    /// let mut rate_limiter = rate_limiter::AtomicRateLimiter::new(5, 2, 1);
+    /// assert!(rate_limiter.reduce(String::from("some key"), 5).0);
+    /// assert!(!rate_limiter.reduce(String::from("some key"), 1).0);
+    ///
+    /// assert!(rate_limiter.reduce(String::from("some other key"), 5).0);
+    /// assert!(!rate_limiter.reduce(String::from("some other key"), 1).0);
+    /// ```
     pub fn reduce(&self, key: String, reduce_tokens: i32) -> (bool, i32) {
         // assume bucket exists so lock HashMap for reading
         let buckets = self.buckets.read().expect("RWLock poisoned.");
