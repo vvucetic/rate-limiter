@@ -80,7 +80,7 @@ pub struct AtomicRateLimiter {
     default_max_amount: i32,
     default_refill_time: i32,
     default_refill_amount: i32,
-    buckets: RwLock<HashMap<String, Mutex<bucket::Bucket>>>,
+    buckets: dashmap::DashMap<String, Mutex<bucket::Bucket>>,
 }
 
 impl AtomicRateLimiter {
@@ -95,7 +95,7 @@ impl AtomicRateLimiter {
             default_max_amount,
             default_refill_time,
             default_refill_amount,
-            buckets: RwLock::new(HashMap::new()),
+            buckets: dashmap::DashMap::new(),
         }
     }
 
@@ -110,8 +110,7 @@ impl AtomicRateLimiter {
     /// assert_eq!(rate_limiter.get_available_tokens(String::from("some key")), 4);
     /// ```
     pub fn get_available_tokens(&self, key: String) -> i32 {
-        let buckets = self.buckets.read().expect("RWLock poisoned.");
-        match buckets.get(&key) {
+        match self.buckets.get(&key) {
             Some(bucket) => bucket
                 .lock()
                 .expect("Mutex poisoned")
@@ -136,17 +135,15 @@ impl AtomicRateLimiter {
     /// ```
     pub fn reduce(&self, key: String, reduce_tokens: i32) -> (bool, i32) {
         // assume bucket exists so lock HashMap for reading
-        let buckets = self.buckets.read().expect("RWLock poisoned.");
-        if let Some(bucket) = buckets.get(&key) {
+        if let Some(bucket) = self.buckets.get(&key) {
+            //std::thread::sleep(std::time::Duration::from_secs(1));
             let mut bucket = bucket.lock().expect("Mutex poisoned");
             return bucket.reduce(reduce_tokens);
         }
         // drop read lock
-        drop(buckets);
         // make write lock
-        let mut buckets = self.buckets.write().expect("RWLock poisoned.");
         // try reducing again this time with write lock
-        if let Some(bucket) = buckets.get(&key) {
+        if let Some(bucket) = self.buckets.get(&key) {
             let mut bucket = bucket.lock().expect("Mutex poisoned");
             return bucket.reduce(reduce_tokens);
         }
@@ -157,7 +154,7 @@ impl AtomicRateLimiter {
             self.default_refill_amount,
         );
         let result = bucket.reduce(reduce_tokens);
-        buckets.insert(key, Mutex::new(bucket));
+        self.buckets.insert(key, Mutex::new(bucket));
         result
     }
 }
