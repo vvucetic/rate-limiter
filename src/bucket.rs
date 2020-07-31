@@ -1,7 +1,7 @@
-use std::cmp::min;
-use std::convert::TryInto;
 #[cfg(test)]
 use fake_clock::FakeClock as Instant;
+use std::cmp::min;
+use std::convert::TryInto;
 #[cfg(not(test))]
 use std::time::Instant;
 
