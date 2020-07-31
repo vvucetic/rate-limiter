@@ -162,6 +162,7 @@ impl AtomicRateLimiter {
     }
 }
 
+#[cfg(feature = "async")]
 #[derive(Debug)]
 pub struct AsyncAtomicRateLimiter {
     default_max_amount: i32,
@@ -278,8 +279,24 @@ mod tests {
         assert_eq!(data.get_available_tokens(String::from("test")), 20);
     }
 
+    #[cfg(feature = "async")]
     #[tokio::test]
-    async fn my_test() {
-        assert!(true);
+    async fn test_reducing_tokens_async_atomic() {
+        let data = Arc::new(AsyncAtomicRateLimiter::new(30, 1, 1));
+
+        let threads: Vec<_> = (0..10)
+            .map(|_| {
+                let data = Arc::clone(&data);
+                tokio::spawn(async move {
+                    data.reduce(String::from("test"), 1).await;
+                })
+            })
+            .collect();
+
+        for t in threads {
+            t.await.unwrap();
+        }
+
+        assert_eq!(data.get_available_tokens(String::from("test")).await, 20);
     }
 }
