@@ -1,5 +1,8 @@
 use std::cmp::min;
 use std::convert::TryInto;
+#[cfg(test)]
+use fake_clock::FakeClock as Instant;
+#[cfg(not(test))]
 use std::time::Instant;
 
 #[derive(Debug)]
@@ -87,7 +90,11 @@ impl Bucket {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::{thread, time};
+
+    fn sleep(time: u64) {
+        use fake_clock::FakeClock;
+        FakeClock::advance_time(time);
+    }
 
     #[test]
     fn test_reducing_tokens() {
@@ -111,8 +118,8 @@ mod tests {
         let mut bucket = Bucket::new(max_tokens, 1, 1);
         // reduce 1 token
         bucket.reduce(1);
-        // wait 2 seconds
-        thread::sleep(time::Duration::from_secs(2));
+        // "wait" 2 seconds
+        sleep(2000);
         // ensure bucket has maximum number of tokens (and not more)
         assert_eq!(bucket.get_available_tokens(), max_tokens)
     }
@@ -122,8 +129,8 @@ mod tests {
         let mut bucket = Bucket::new(5, 2, 1);
         // reduce to 0
         bucket.reduce(5);
-        // wait 2 seconds
-        thread::sleep(time::Duration::from_secs(2));
+        // "wait" 2 seconds
+        sleep(2000);
         // ensure we got new token available
         assert_eq!(bucket.get_available_tokens(), 1)
     }
@@ -133,8 +140,8 @@ mod tests {
         let mut bucket = Bucket::new(5, 1, 2);
         // reduce to 0
         bucket.reduce(5);
-        // wait 1 second
-        thread::sleep(time::Duration::from_secs(1));
+        // "wait" 1 second
+        sleep(1000);
         // ensure we got 2 new tokens available
         assert_eq!(bucket.get_available_tokens(), 2)
     }
