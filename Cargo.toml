@@ -1,11 +1,17 @@
 [package]
 name = "rate_limiter"
 version = "0.1.0"
+description = "Fast in-memory rate-limiter"
 authors = ["Vedran Vucetic <vedran.vucetic@gmail.com>"]
 edition = "2018"
 readme = "README.md"
 include = ["README.md"]
+repository = "https://github.com/vvucetic/rate-limiter"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+default = ["async"]
+
+async = ["tokio"]
 
 [dependencies]
+tokio = { version = "0.2", features = ["sync", "rt-threaded", "macros"], optional = true }
