@@ -53,7 +53,7 @@ Internally, `AtomicRateLimiter` tries to keep buckets locked for reading (oppose
 
 Async implementation of `AtomicRateLimiter` is behind `async` crate feature and it's included by default. Difference to thread-safe rate_limiter is use of async locks so thread consuming rate-limiter can be released until able to lock desired resource. Another important change is RWLock used gives priority to write operation, which in this case is when you're trying to reduce from bucket that doesn't exist yet. This prevents writer starvation and it helps a lot with performance. 
 
-```
+```rust
 let data = Arc::new(AsyncAtomicRateLimiter::new(30, 1, 1));
 
 let threads: Vec<_> = (0..10)
