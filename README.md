@@ -48,3 +48,26 @@ for t in threads {
 assert_eq!(atomic_rate_limiter.get_available_tokens(String::from("test")), 20);
 ```
 Internally, `AtomicRateLimiter` tries to keep buckets locked for reading (opposed to locked completely) so multiple threads can use different buckets. However, when reducing from one bucket (per key), only one thread can reduce tokens at the same time to maintain consistent state. 
+
+### Async thread-safe rate_limiter
+
+Async implementation of `AtomicRateLimiter` is behind `async` crate feature and it's included by default. Difference to thread-safe rate_limiter is use of async locks so thread consuming rate-limiter can be released until able to lock desired resource. Another important change is RWLock used gives priority to write operation, which in this case is when you're trying to reduce from bucket that doesn't exist yet. This prevents writer starvation and it helps a lot with performance. 
+
+```
+let data = Arc::new(AsyncAtomicRateLimiter::new(30, 1, 1));
+
+let threads: Vec<_> = (0..10)
+    .map(|_| {
+        let data = Arc::clone(&data);
+        tokio::spawn(async move {
+            data.reduce(String::from("test"), 1).await;
+        })
+    })
+    .collect();
+
+for t in threads {
+    t.await.unwrap();
+}
+
+assert_eq!(data.get_available_tokens(String::from("test")).await, 20);
+```
